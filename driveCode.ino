@@ -1,7 +1,7 @@
 
 #include <ECE3.h>
 #include <stdio.h>
-
+// doesn't go backwards on the turns but does on the straight
 const int left_nslp_pin=31; // nslp HIGH ==> awake & ready for PWM
 const int right_nslp_pin=11; // nslp HIGH ==> awake & ready for PWM
 const int left_dir_pin=29;
@@ -10,7 +10,7 @@ const int left_pwm_pin=40;
 const int right_pwm_pin=39;
 
 const int LED_RF = 75;
-int baseSpeed = 10;
+int baseSpeed = 15;
 int currSpeedL = 0;
 int currSpeedR = 0;
 
@@ -18,13 +18,22 @@ uint16_t sensorValues[8];
 int weights[8] = {-8, -4, -2, -1, 1, 2, 4, 8};
 int mins[8] = {804, 736, 716, 733, 641, 628, 733, 710};
 int maxes[8] = {1696, 1324, 1387, 1185, 940, 914, 1767, 1790};
+
+int errLen = 2;
 int pastErrors[2] = {0, 0};
 float kp = -0.01;
-float kd = 0;
+float kd = -0.03;
 int iters = 0;
 
-int getPID(int error) {
+int stateR = 0;
+int stateL = 0;
+
+int getP(int error) {
   return error*kp;
+}
+
+int getD(int arr[]) {
+  return kd*((arr[0] + arr[1]) / errLen);
 }
 
 
@@ -64,8 +73,24 @@ void  ChangeWheelSpeeds(int initialLeftSpd, int finalLeftSpd, int initialRightSp
   for(int k=0;k<numSteps;k++) {
     pwmLeftVal = pwmLeftVal + deltaLeft;
     pwmRightVal = pwmRightVal + deltaRight;
-    analogWrite(left_pwm_pin,pwmLeftVal);    
-    analogWrite(right_pwm_pin,pwmRightVal); 
+
+    if (pwmLeftVal < 0) {
+      digitalWrite(left_dir_pin,HIGH);
+      analogWrite(left_pwm_pin,pwmLeftVal*-1);   
+    } else {
+      digitalWrite(left_dir_pin,LOW);
+      analogWrite(left_pwm_pin,pwmLeftVal);   
+    }
+
+    if (pwmRightVal < 0) {
+      digitalWrite(right_dir_pin,HIGH);
+      analogWrite(right_pwm_pin,pwmRightVal*-1); 
+    } else {
+      digitalWrite(right_dir_pin,LOW);
+      analogWrite(right_pwm_pin,pwmRightVal); 
+    }
+
+
     delay(10);   
   } // end for int k
 //  if(finalLeftSpd  == 0) analogWrite(left_pwm_pin,0); ;
@@ -119,12 +144,19 @@ void loop() {
   int error = computeError(sensorValues);
   // Serial.println(error);
   // delay(1000);
+  pastErrors[iters] = error;
+  iters = (iters + 1) % 2;
 
-  int delta = getPID(error);
+  int delta = getP(error) + getD(pastErrors);
 
  
   ChangeWheelSpeeds(currSpeedL, baseSpeed + delta, currSpeedR, baseSpeed - delta);
   currSpeedL = baseSpeed + delta;
   currSpeedR = baseSpeed - delta;
+  // Serial.print("Right: ");
+  // Serial.println(currSpeedL);
+
+  // Serial.print("Left: ");
+  // Serial.println(currSpeedR);
 
 }
