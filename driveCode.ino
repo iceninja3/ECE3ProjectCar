@@ -10,7 +10,7 @@ const int left_pwm_pin=40;
 const int right_pwm_pin=39;
 
 const int LED_RF = 75;
-int baseSpeed = 15;
+int baseSpeed = 25;
 int currSpeedL = 0;
 int currSpeedR = 0;
 
@@ -36,6 +36,18 @@ int getD(int arr[]) {
   return kd*((arr[0] + arr[1]) / errLen);
 }
 
+int splitIters = 0;
+int detectSplit(uint16_t vals[]) {
+  if (vals[2] + vals[3] > 2500) {
+    return 1;
+  }
+  return 0;
+}
+
+// int detectCross() {
+//   if (vals[0] )
+// }
+
 
 int computeError(uint16_t vals[]) {
   int sum = 0;
@@ -52,51 +64,32 @@ int computeError(uint16_t vals[]) {
   return sum / 4;
 }
 
-void  ChangeWheelSpeeds(int initialLeftSpd, int finalLeftSpd, int initialRightSpd, int finalRightSpd) {
+void  ChangeWheelSpeeds(int finalLeftSpd, int finalRightSpd) {
 /*  
  *   This function changes the car speed gradually (in about 30 ms) from initial
  *   speed to final speed. This non-instantaneous speed change reduces the load 
  *   on the plastic geartrain, and reduces the failure rate of the motors. 
  */
-  int diffLeft  = finalLeftSpd-initialLeftSpd;
-  int diffRight = finalRightSpd-initialRightSpd;
-  int stepIncrement = 20;
-  int numStepsLeft  = abs(diffLeft)/stepIncrement;
-  int numStepsRight = abs(diffRight)/stepIncrement;
-  int numSteps = max(numStepsLeft,numStepsRight);
-  
-  int pwmLeftVal = initialLeftSpd;        // initialize left wheel speed 
-  int pwmRightVal = initialRightSpd;      // initialize right wheel speed 
-  int deltaLeft = (diffLeft)/numSteps;    // left in(de)crement
-  int deltaRight = (diffRight)/numSteps;  // right in(de)crement
 
-  for(int k=0;k<numSteps;k++) {
-    pwmLeftVal = pwmLeftVal + deltaLeft;
-    pwmRightVal = pwmRightVal + deltaRight;
 
-    if (pwmLeftVal < 0) {
+    if (finalLeftSpd < 0) {
       digitalWrite(left_dir_pin,HIGH);
-      analogWrite(left_pwm_pin,pwmLeftVal*-1);   
+      analogWrite(left_pwm_pin,finalLeftSpd*-1);   
     } else {
       digitalWrite(left_dir_pin,LOW);
-      analogWrite(left_pwm_pin,pwmLeftVal);   
+      analogWrite(left_pwm_pin,finalLeftSpd);   
     }
 
-    if (pwmRightVal < 0) {
+    if (finalRightSpd < 0) {
       digitalWrite(right_dir_pin,HIGH);
-      analogWrite(right_pwm_pin,pwmRightVal*-1); 
+      analogWrite(right_pwm_pin,finalRightSpd*-1); 
     } else {
       digitalWrite(right_dir_pin,LOW);
-      analogWrite(right_pwm_pin,pwmRightVal); 
+      analogWrite(right_pwm_pin,finalRightSpd); 
     }
 
 
-    delay(10);   
-  } // end for int k
-//  if(finalLeftSpd  == 0) analogWrite(left_pwm_pin,0); ;
-//  if(finalRightSpd == 0) analogWrite(right_pwm_pin,0);
-  analogWrite(left_pwm_pin,finalLeftSpd);  
-  analogWrite(right_pwm_pin,finalRightSpd);  
+ 
 } // end void  ChangeWheelSpeeds
 
 void setup() {
@@ -137,22 +130,39 @@ void loop() {
   ECE3_read_IR(sensorValues);
 
   for (unsigned char i = 0; i < 8; i ++) {
-    // Serial.print(sensorValues[i]);
-    // Serial.print('\t');
+    Serial.print(sensorValues[i]);
+    Serial.print('\t');
   }
+  splitIters += detectSplit(sensorValues);
+  if (splitIters >= 10) {
+    weights[0] = 0;
+    weights[1] = 0;
+    weights[2] = 0;
+    weights[3] = 0;
+    if (!detectSplit(sensorValues)) {
+      splitIters = 0;
+      weights[0] = -8;
+      weights[1] = -4;
+      weights[2] = -2;
+      weights[3] = -1;
+    }
+  }
+  Serial.println(detectSplit(sensorValues));
 
   int error = computeError(sensorValues);
   // Serial.println(error);
-  // delay(1000);
+  // delay(500);
+
   pastErrors[iters] = error;
   iters = (iters + 1) % 2;
 
   int delta = getP(error) + getD(pastErrors);
+  
+  
 
- 
-  ChangeWheelSpeeds(currSpeedL, baseSpeed + delta, currSpeedR, baseSpeed - delta);
-  currSpeedL = baseSpeed + delta;
-  currSpeedR = baseSpeed - delta;
+  ChangeWheelSpeeds(baseSpeed + delta, baseSpeed - delta);
+  // currSpeedL = baseSpeed + delta;
+  // currSpeedR = baseSpeed - delta;
   // Serial.print("Right: ");
   // Serial.println(currSpeedL);
 
