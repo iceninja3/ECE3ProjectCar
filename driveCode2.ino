@@ -97,7 +97,7 @@ int computeError(const int raw[8]) {
   // Return scaled error (×100) to give resolution
   return den ? (num * 100 / den) : 0;
 }
-
+ 
 int countActiveSensors(const int raw[8]) {
   int cnt = 0;
   for (int i = 0; i < 8; i++) cnt += raw[i];

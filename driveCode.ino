@@ -37,11 +37,19 @@ int getD(int arr[]) {
 }
 
 int splitIters = 0;
-int detectSplit(uint16_t vals[]) {
-  if (vals[2] + vals[3] > 2500) {
-    return 1;
+// int detectSplit(uint16_t vals[]) {
+//   if (vals[2] + vals[3] > 2500) {
+//     return 1;
+//   }
+//   return 0;
+// }
+int detectSplit(uint16_t vals[]) { // Vishal 5/19 change for left code. S turn may no longer work. REMOVE?
+  // new idea, if middle 3 vals sum is above a certain value , we aren't in split
+  // 
+  if((vals[3]+vals[4]+vals[5])>5000){ // 5000 is a magic number
+    return 0; //no split
   }
-  return 0;
+  return 1; //otherwise split detected
 }
 
 // int detectCross() {
@@ -133,19 +141,29 @@ void loop() {
     Serial.print(sensorValues[i]);
     Serial.print('\t');
   }
-  splitIters += detectSplit(sensorValues);
-  if (splitIters >= 10) {
-    weights[0] = 0;
-    weights[1] = 0;
-    weights[2] = 0;
-    weights[3] = 0;
-    if (!detectSplit(sensorValues)) {
-      splitIters = 0;
-      weights[0] = -8;
-      weights[1] = -4;
-      weights[2] = -2;
-      weights[3] = -1;
-    }
+  splitIters += detectSplit(sensorValues); //splitIters would never be reset? I think? 
+  if(detectSplit(sensorvalues)){
+    splitIters++;
+
+  }else{
+    splitIters=0;
+  }
+
+  if (splitIters >= 10) { //if we've detected a split for 10 iterations in a row. Maybe change 10 to a smaller number like 5?
+    // weights[0] = 0;
+    // weights[1] = 0;
+    // weights[2] = 0;
+    // weights[3] = 0;
+    // if (!detectSplit(sensorValues)) {
+    //   splitIters = 0;
+    //   weights[0] = -8;
+    //   weights[1] = -4;
+    //   weights[2] = -2;
+    //   weights[3] = -1;
+    // }
+    //commented out code ^ is idea that caused car to just oscillate between left and right paths
+    
+
   }
   Serial.println(detectSplit(sensorValues));
 
