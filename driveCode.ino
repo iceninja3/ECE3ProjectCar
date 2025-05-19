@@ -37,24 +37,28 @@ int getD(int arr[]) {
 }
 
 int splitIters = 0;
-// int detectSplit(uint16_t vals[]) {
-//   if (vals[2] + vals[3] > 2500) {
-//     return 1;
-//   }
-//   return 0;
-// }
-int detectSplit(uint16_t vals[]) { // Vishal 5/19 change for left code. S turn may no longer work. REMOVE?
-  // new idea, if middle 3 vals sum is above a certain value , we aren't in split
-  // 
-  if((vals[3]+vals[4]+vals[5])>5000){ // 5000 is a magic number
-    return 0; //no split
+int detectSplit(uint16_t vals[]) {
+  if (vals[2] + vals[3] > 2500) {
+    return 1;
   }
-  return 1; //otherwise split detected
+  return 0;
 }
-
-// int detectCross() {
-//   if (vals[0] )
+// int detectSplit(uint16_t vals[]) { // Vishal 5/19 change for left code. S turn may no longer work. REMOVE?
+//   // new idea, if middle 3 vals sum is above a certain value , we aren't in split
+//   // 
+//   if((vals[3]+vals[4]+vals[5])>5000){ // 5000 is a magic number
+//     return 0; //no split
+//   }
+//   return 1; //otherwise split detected
 // }
+
+int detectCross(uint16_t vals[]) {
+  if (vals[0] > 2450 && vals[1] > 2450 && vals[2] > 2450 && vals[3] > 2450 
+  && vals[4] > 2350 && vals[5] > 2450 && vals[6] > 2450 && vals[7] > 2450) {
+    return 1;
+  }
+  return 0;
+}
 
 
 int computeError(uint16_t vals[]) {
@@ -133,6 +137,8 @@ void setup() {
   delay(2000); //Wait 2 seconds before starting 
 }
 
+int crossIters = 0;
+int turnCount = 0;
 void loop() {
   // put your main code here, to run repeatedly:
   ECE3_read_IR(sensorValues);
@@ -141,14 +147,32 @@ void loop() {
     Serial.print(sensorValues[i]);
     Serial.print('\t');
   }
-  splitIters += detectSplit(sensorValues); //splitIters would never be reset? I think? 
-  if(detectSplit(sensorvalues)){
+
+  // if(detectCross(sensorValues)){
+  //   crossIters++;
+
+  // }
+
+  // if (crossIters >= 5) {
+  //   if (turnCount < 40 && turnCount > 0) {
+  //     ChangeWheelSpeeds(15, -15);
+  //     turnCount++;
+  //     return;
+  //   } else {
+  //     crossIters = 0;
+  //   }
+  // }
+
+
+  // splitIters += detectSplit(sensorValues); //splitIters would never be reset? I think? 
+  if(detectSplit(sensorValues)){
     splitIters++;
 
   }else{
     splitIters=0;
   }
 
+  int splitTurn = 0;
   if (splitIters >= 10) { //if we've detected a split for 10 iterations in a row. Maybe change 10 to a smaller number like 5?
     // weights[0] = 0;
     // weights[1] = 0;
@@ -162,10 +186,10 @@ void loop() {
     //   weights[3] = -1;
     // }
     //commented out code ^ is idea that caused car to just oscillate between left and right paths
-    
+    splitTurn = 15; // previous value: 10 (possibly increase)
 
   }
-  Serial.println(detectSplit(sensorValues));
+  Serial.println(detectCross(sensorValues));
 
   int error = computeError(sensorValues);
   // Serial.println(error);
@@ -176,9 +200,9 @@ void loop() {
 
   int delta = getP(error) + getD(pastErrors);
   
-  
-
-  ChangeWheelSpeeds(baseSpeed + delta, baseSpeed - delta);
+  int speedL = baseSpeed + delta + splitTurn;
+  int speedR = baseSpeed - delta - splitTurn;
+  ChangeWheelSpeeds(speedL, speedR);
   // currSpeedL = baseSpeed + delta;
   // currSpeedR = baseSpeed - delta;
   // Serial.print("Right: ");
