@@ -10,12 +10,12 @@ const int left_pwm_pin=40;
 const int right_pwm_pin=39;
 
 const int LED_RF = 75;
-int baseSpeed = 25;
+int baseSpeed = 22;
 int currSpeedL = 0;
 int currSpeedR = 0;
 
 uint16_t sensorValues[8];
-int weights[8] = {-8, -4, -2, -1, 1, 2, 4, 8};
+int weights[8] = {-4, -4, -2, -1, 1, 2, 4, 4};
 int mins[8] = {804, 736, 716, 733, 641, 628, 733, 710};
 int maxes[8] = {1696, 1324, 1387, 1185, 940, 914, 1767, 1790};
 
@@ -37,12 +37,7 @@ int getD(int arr[]) {
 }
 
 int splitIters = 0;
-int detectSplit(uint16_t vals[]) {
-  if (vals[2] + vals[3] > 2500) {
-    return 1;
-  }
-  return 0;
-}
+
 // int detectSplit(uint16_t vals[]) { // Vishal 5/19 change for left code. S turn may no longer work. REMOVE?
 //   // new idea, if middle 3 vals sum is above a certain value , we aren't in split
 //   // 
@@ -53,13 +48,21 @@ int detectSplit(uint16_t vals[]) {
 // }
 
 int detectCross(uint16_t vals[]) {
-  if (vals[0] > 2450 && vals[1] > 2450 && vals[2] > 2450 && vals[3] > 2450 
-  && vals[4] > 2350 && vals[5] > 2450 && vals[6] > 2450 && vals[7] > 2450) {
+  if (vals[0] > 2300 && vals[1] > 2300 && vals[2] > 2200 && vals[3] > 1800 
+  && vals[4] > 1800 && vals[5] > 2200 && vals[6] > 2300 && vals[7] > 2300) {
     return 1;
   }
   return 0;
 }
 
+int detectSplit(uint16_t vals[]) {
+  return 0;
+  if (detectCross(vals)) return 0;
+  if (vals[2] + vals[3] > 2500) {
+    return 1;
+  }
+
+}
 
 int computeError(uint16_t vals[]) {
   int sum = 0;
@@ -103,7 +106,7 @@ void  ChangeWheelSpeeds(int finalLeftSpd, int finalRightSpd) {
 
  
 } // end void  ChangeWheelSpeeds
-
+int turnVal = 30;
 void setup() {
 
   ECE3_Init();
@@ -148,21 +151,22 @@ void loop() {
     Serial.print('\t');
   }
 
-  // if(detectCross(sensorValues)){
-  //   crossIters++;
+  if(detectCross(sensorValues)) {
+    crossIters++;
+    // ChangeWheelSpeeds(0, 0);
+    // delay(1000);
+    Serial.print("Cross detected");
+    if (crossIters > 1) {
+        ChangeWheelSpeeds(0, 0);
+        delay(2000);
+        ChangeWheelSpeeds(30, -30);
+        turnVal *= -1;
+        delay(2500);
+        crossIters = 0;
+    } else return;
+  }
 
-  // }
-
-  // if (crossIters >= 5) {
-  //   if (turnCount < 40 && turnCount > 0) {
-  //     ChangeWheelSpeeds(15, -15);
-  //     turnCount++;
-  //     return;
-  //   } else {
-  //     crossIters = 0;
-  //   }
-  // }
-
+  
 
   // splitIters += detectSplit(sensorValues); //splitIters would never be reset? I think? 
   if(detectSplit(sensorValues)){
@@ -173,7 +177,7 @@ void loop() {
   }
 
   int splitTurn = 0;
-  if (splitIters >= 10) { //if we've detected a split for 10 iterations in a row. Maybe change 10 to a smaller number like 5?
+  if (splitIters >= 5) { //if we've detected a split for 10 iterations in a row. Maybe change 10 to a smaller number like 5?
     // weights[0] = 0;
     // weights[1] = 0;
     // weights[2] = 0;
@@ -186,10 +190,10 @@ void loop() {
     //   weights[3] = -1;
     // }
     //commented out code ^ is idea that caused car to just oscillate between left and right paths
-    splitTurn = 15; // previous value: 10 (possibly increase)
+    splitTurn = turnVal; // previous value: 10 (possibly increase)
 
   }
-  Serial.println(detectCross(sensorValues));
+  Serial.println(detectSplit(sensorValues));
 
   int error = computeError(sensorValues);
   // Serial.println(error);
@@ -200,8 +204,8 @@ void loop() {
 
   int delta = getP(error) + getD(pastErrors);
   
-  int speedL = baseSpeed + delta + splitTurn;
-  int speedR = baseSpeed - delta - splitTurn;
+  int speedL = baseSpeed + delta - splitTurn;
+  int speedR = baseSpeed - delta + splitTurn;
   ChangeWheelSpeeds(speedL, speedR);
   // currSpeedL = baseSpeed + delta;
   // currSpeedR = baseSpeed - delta;
