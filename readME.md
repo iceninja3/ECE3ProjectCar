@@ -11,14 +11,18 @@ pid_output = computePID(error);
 setMotorSpeeds(base_speed+pid_output, base_speed-pidoutput);
 }
 ```
+5/23 Ideas (fix arch, test full runs to make sure they're consistent):
+- Test split again. See if we can detect arch or not in the first place.
+- Tweak turnSpeed to see if jump, arch, and split can use a common value? If not --> try the weights method
 
-## Things car needs to do and can't do yet:
-2. When a split in the path is encountered, the car needs to take the left path
-3. The car reaches the end of the path, it needs to turn around and come back (this time it takes the right paths since the old left is now right)
+## Current Status:
+S-turn: Good
+Split: Good on way there and back
+Arch: 
+- Not sure if we are even detecting the arch split in the first place. I think we are? For a little bit at least
+Endpiece/Crosspiece: Stops pretty consistently. On the way back it occasionally doesn't stop? Might not be an issue anymore? Need to test more.
 
 ## Ideas:
-2. Need to do something along the lines of: if (the outer sensors both sense black) -> ignore the right side's black? Or maybe just weight hte left more heavily? hard code the car to turn left?
-3. After a few consecutive all-white readings (maybe 5? Shouldn't be too many because then the car might have trouble finding the path again), the car switches "modes" to turn around and come back
 
 
 Idea to go left pseudocode:
