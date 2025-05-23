@@ -21,7 +21,7 @@ int maxes[8] = {1696, 1324, 1387, 1185, 940, 914, 1767, 1790};
 
 int errLen = 2;
 int pastErrors[2] = {0, 0};
-float kp = -0.03;
+float kp = -0.0317;
 float kd = -0.00;
 int iters = 0;
 
@@ -163,7 +163,7 @@ void setup() {
 int crossIters = 0;
 int turnCount = 0;
 int turnVal = 70;
-
+bool end = false;
 void loop() {
   // put your main code here, to run repeatedly:
   ECE3_read_IR(sensorValues);
@@ -180,11 +180,14 @@ void loop() {
     Serial.print("Cross detected");
     if (crossIters > 1) {
         ChangeWheelSpeeds(0, 0);
+        if (end) while (1) delay(1000);
+        
         delay(2000);
         ChangeWheelSpeeds(30, -30);
         turnVal *= -1;
         delay(2200);
         crossIters = 0;
+        end = true;
     } else return;
   } else crossIters = 0;
 
