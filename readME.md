@@ -32,3 +32,6 @@ if(splitcounter is more than 10){ set inSplit state to true}
 If(the line is in middle of car sensors) { set "insplit" state to false and splitcounter to 0} -> to check if line is in middle of car sensors just see if the sum of the middle three senesors is above some vvalue
 
 if (inSplit is true){ turn left } -> turn left by doing a ChangeWheelSpeed but using our own speed (like ChangeWheelSpeed (-10, 10) or something).
+
+
+[Link to Google Doc (Final report)](https://docs.google.com/document/d/1C0lZbsz1eF8qE-u9_uHX11CVUYBnxJjYeTKVNjcXfjA/edit?tab=t.0)
