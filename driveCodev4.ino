@@ -22,7 +22,7 @@ int maxes[8] = {1696, 1324, 1387, 1185, 940, 914, 1767, 1790};
 int errLen = 2;
 int pastErrors[2] = {0, 0};
 float kp = -0.0317;
-float kd = -0.00;
+float kd = 0.0;
 int iters = 0;
 
 int stateR = 0;
@@ -48,8 +48,8 @@ int splitIters = 0;
 // }
 
 int detectCross(uint16_t vals[]) {
-  if (vals[0] > 2300 && vals[1] > 2300 && vals[2] > 2200 && vals[3] > 1800 
-  && vals[4] > 1800 && vals[5] > 2200 && vals[6] > 2300 && vals[7] > 2300) {
+  if (vals[0] > 2000 && vals[1] > 2000 && vals[2] > 2000 && vals[3] > 1800 
+  && vals[4] > 1800 && vals[5] > 2000 && vals[6] > 2000 && vals[7] > 2000) {
     return 1;
   }
   return 0;
@@ -168,10 +168,10 @@ void loop() {
   // put your main code here, to run repeatedly:
   ECE3_read_IR(sensorValues);
 
-  for (unsigned char i = 0; i < 8; i ++) {
-    Serial.print(sensorValues[i]);
-    Serial.print('\t');
-  }
+  // for (unsigned char i = 0; i < 8; i ++) {
+  //   Serial.print(sensorValues[i]);
+  //   Serial.print('\t');
+  // }
 
   if(detectCross(sensorValues)) {
     crossIters++;
@@ -182,7 +182,7 @@ void loop() {
         ChangeWheelSpeeds(0, 0);
         if (end) while (1) delay(1000);
         
-        delay(2000);
+        delay(1000);
         ChangeWheelSpeeds(30, -30);
         turnVal *= -1;
         delay(2200);
@@ -218,7 +218,7 @@ void loop() {
     splitTurn = turnVal; // previous value: 10 (possibly increase)
 
   }
-  Serial.println(detectSplit(sensorValues));
+  // Serial.println(detectSplit(sensorValues));
 
   int error = computeError(sensorValues);
   // Serial.println(error);
