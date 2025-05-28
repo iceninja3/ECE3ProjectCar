@@ -10,7 +10,7 @@ const int left_pwm_pin=40;
 const int right_pwm_pin=39;
 
 const int LED_RF = 75;
-int baseSpeed = 30;
+int baseSpeed = 35;
 int currSpeedL = 0;
 int currSpeedR = 0;
 
@@ -21,7 +21,7 @@ int maxes[8] = {1696, 1324, 1387, 1185, 940, 914, 1767, 1790};
 
 int errLen = 2;
 int pastErrors[2] = {0, 0};
-float kp = -0.06;
+float kp = -0.07;
 float kd = 0.0;
 int iters = 0;
 
